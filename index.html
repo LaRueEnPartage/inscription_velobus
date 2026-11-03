@@ -1,0 +1,428 @@
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Inscription Vélobus</title>
+<style>
+* {box-sizing:border-box}
+body {
+  margin:0;padding:16px;
+  font-family:Arial,sans-serif;
+  background:#f2f6f3;color:#26352d
+}
+.container {max-width:650px;margin:auto}
+header {text-align:center;padding:20px 10px}
+header h1 {color:#26734b}
+header p {color:#637469}
+.section {
+  background:white;padding:22px;border-radius:14px;
+  margin-bottom:18px;box-shadow:0 2px 8px #0000000d
+}
+h2 {
+  color:#26734b;font-size:19px;margin:0 0 20px;
+  border-bottom:1px solid #e5eee8;padding-bottom:12px
+}
+h3 {color:#26734b;font-size:17px;margin:0}
+.field {margin-bottom:16px}
+label {display:block;font-weight:600;margin-bottom:7px;font-size:14px}
+input,select {
+  width:100%;padding:13px;border:1px solid #cbd8ce;
+  border-radius:8px;font-size:16px;background:white;color:#26352d
+}
+.check {
+  display:flex;align-items:center;gap:10px;
+  margin:13px 0;font-weight:normal;line-height:1.4
+}
+.check input {
+  width:20px;height:20px;accent-color:#26734b;flex-shrink:0
+}
+.child-card {
+  border:1px solid #d8e6dc;background:#fbfdfb;
+  padding:17px;border-radius:12px;margin-bottom:16px
+}
+.child-title {
+  display:flex;align-items:center;
+  justify-content:space-between;margin-bottom:18px
+}
+.remove {
+  background:#f9e9e9;color:#a33;border:0;
+  border-radius:7px;padding:8px 10px;cursor:pointer;width:auto
+}
+.add {
+  background:#e5f2e9;color:#26734b;
+  border:1px dashed #26734b;margin-bottom:18px
+}
+.submit {
+  background:#26734b;color:white;border:0;
+  border-radius:9px;padding:16px;font-size:17px;
+  font-weight:bold;cursor:pointer;width:100%
+}
+button {cursor:pointer}
+button:hover {opacity:.9}
+.notice {
+  background:#edf5ef;border-left:4px solid #26734b;
+  padding:12px;border-radius:5px;margin:12px 0;
+  font-size:14px;line-height:1.5
+}
+.hidden {display:none}
+#message {text-align:center;margin-top:15px;color:#26734b}
+</style>
+</head>
+
+<body>
+<div class="container">
+
+<header>
+<h1>🚲 Inscription Vélobus</h1>
+<p>Rejoignez le Vélobus de votre quartier !</p>
+</header>
+
+<form id="velobusForm">
+
+<div class="section">
+<h2>👨‍👩‍👧 Parent</h2>
+
+<div class="field">
+<label>Nom et prénom *</label>
+<input name="parentNom" required>
+</div>
+
+<div class="field">
+<label>Adresse email *</label>
+<input type="email" name="email" required>
+</div>
+
+<div class="field">
+<label>Téléphone *</label>
+<input type="tel" name="telephone" required>
+</div>
+
+<label class="check">
+<input type="checkbox" name="accompagnement" value="Tous les jours">
+Peut accompagner tous les jours
+</label>
+
+<label class="check">
+<input type="checkbox" name="accompagnement" value="De temps en temps">
+Peut accompagner de temps en temps
+</label>
+</div>
+
+<div class="section">
+<h2>🧒 Mes enfants</h2>
+
+<div id="children"></div>
+
+<button type="button" class="add" id="addChild">
++ Ajouter un enfant
+</button>
+</div>
+
+<button type="submit" class="submit">
+Envoyer mon inscription
+</button>
+
+<div id="message"></div>
+</form>
+</div>
+
+<script>
+
+// ==========================================
+// CONFIGURATION DES ECOLES ET DES LIGNES
+// ==========================================
+
+// Pour ajouter ultérieurement une ligne,
+// il suffira de modifier cette configuration.
+
+const ecoles = {
+  "École du Centre": [2,3,4,5],
+  "École de la Luzerne": [],
+  "Collège Émile Zola": [],
+  "Collège Andrée Chedid": [1]
+};
+
+// ==========================================
+// TABLE DES ARRETS
+// ==========================================
+
+const arrets = [
+[1,4,"Flora Tristan","7h36"],
+[1,5,"République","7h38"],
+[2,6,"Ecole","8h20"],
+[1,1,"Fils d'Ariane","7h32"],
+[2,2,"Magellan","8h06"],
+[1,13,"Venteille","7h34"],
+[4,7,"aa","8h11"],
+[4,8,"Le bois","8h09"],
+[4,9,"Menespey","8h06"],
+[1,10,"Corbiac","7h25"],
+[1,11,"Lestage","7h28"],
+[1,12,"Bécut","7h30"],
+[2,3,"Bicentenaire","8h08"],
+[5,14,"Ecureuils","8h11"],
+[5,15,"Victor Hugo","8h14"],
+[1,16,"Morandière","7h40"],
+[1,17,"Descartes","7h43"],
+[1,18,"Chedid","7h45"],
+[5,19,"Tauzins","8h06"],
+[5,20,"Sabliere","8h08"],
+[5,21,"Courtade","8h09"],
+[4,22,"Bernede","8h15"],
+[4,23,"Gounod","8h17"],
+[5,23,"Gounod","8h17"],
+[5,22,"Bernede","8h15"],
+[4,15,"Victor Hugo","8h14"],
+[2,5,"République","8h14"],
+[2,4,"Flora Tristan","8h12"],
+[3,13,"Venteille","8h10"],
+[2,1,"Fils d'Ariane","8h08"],
+[2,12,"Bécut","8h06"],
+[4,6,"Ecole","8h20"],
+[5,6,"Ecole","8h20"]
+];
+
+// ==========================================
+// CREATION DES FICHES ENFANTS
+// ==========================================
+
+const children = document.getElementById("children");
+
+function ajouterEnfant() {
+
+ const card = document.createElement("div");
+ card.className = "child-card";
+
+ card.innerHTML = `
+ <div class="child-title">
+   <h3></h3>
+   <button type="button" class="remove">Supprimer</button>
+ </div>
+
+ <div class="field">
+   <label>Nom et prénom *</label>
+   <input data-field="nom" required>
+ </div>
+
+ <div class="field">
+   <label>Âge *</label>
+   <input data-field="age" type="number" min="1" max="18" required>
+ </div>
+
+ <div class="field">
+   <label>École *</label>
+   <select data-field="ecole" class="ecole" required>
+     <option value="">Sélectionner une école</option>
+   </select>
+ </div>
+
+ <div class="route">
+   <div class="field">
+     <label>Ligne Vélobus</label>
+     <select data-field="ligne" class="ligne">
+       <option value="">Sélectionner une ligne</option>
+     </select>
+   </div>
+
+   <div class="field">
+     <label>Arrêt</label>
+     <select data-field="arret" class="arret" disabled>
+       <option value="">Choisir une ligne</option>
+     </select>
+   </div>
+
+   <label class="check">
+     <input type="checkbox" data-field="pasArret">
+     Pas d'arrêt à proximité de chez moi
+   </label>
+ </div>
+
+ <div class="projet hidden">
+   <div class="notice">
+     <strong>Nouvelle ligne à créer !</strong><br>
+     Il n'existe pas encore de ligne Vélobus pour cette école.
+     Votre inscription nous aidera à identifier les besoins
+     et à préparer de nouveaux itinéraires.
+   </div>
+
+   <div class="field">
+     <label>Quartier ou rue de départ *</label>
+     <input data-field="quartier"
+       placeholder="Indiquer votre quartier ou votre rue">
+   </div>
+
+   <label class="check">
+     <input type="checkbox" data-field="interet">
+     Je souhaite participer à la création d'une nouvelle ligne
+   </label>
+ </div>
+ `;
+
+ children.appendChild(card);
+
+ // Ecoles
+ const selectEcole = card.querySelector(".ecole");
+
+ Object.keys(ecoles).forEach(nom => {
+   const option = document.createElement("option");
+   option.value = nom;
+   option.textContent = nom;
+   selectEcole.appendChild(option);
+ });
+
+ const ligne = card.querySelector(".ligne");
+ const arret = card.querySelector(".arret");
+ const pasArret = card.querySelector('[data-field="pasArret"]');
+ const route = card.querySelector(".route");
+ const projet = card.querySelector(".projet");
+ const quartier = card.querySelector('[data-field="quartier"]');
+ const interet = card.querySelector('[data-field="interet"]');
+
+ // Changement d'école
+ selectEcole.addEventListener("change", function() {
+
+   const disponibles = ecoles[this.value] || [];
+
+   ligne.innerHTML = '<option value="">Sélectionner une ligne</option>';
+
+   disponibles.forEach(numero => {
+     const option = document.createElement("option");
+     option.value = numero;
+     option.textContent = "Ligne " + numero;
+     ligne.appendChild(option);
+   });
+
+   arret.innerHTML = '<option value="">Choisir une ligne</option>';
+   arret.disabled = true;
+   arret.required = false;
+   ligne.value = "";
+
+   if(disponibles.length === 0 && this.value) {
+     route.classList.add("hidden");
+     projet.classList.remove("hidden");
+     quartier.required = true;
+     interet.required = true;
+   } else {
+     route.classList.remove("hidden");
+     projet.classList.add("hidden");
+     quartier.required = false;
+     interet.required = false;
+   }
+ });
+
+ // Changement de ligne
+ ligne.addEventListener("change", function() {
+
+   arret.innerHTML = '<option value="">Sélectionner un arrêt</option>';
+
+   const liste = arrets.filter(a => a[0] === Number(this.value));
+
+   liste.forEach(a => {
+     const option = document.createElement("option");
+     option.value = a[1];
+     option.textContent = a[1] + " - " + a[2] + " (" + a[3] + ")";
+     arret.appendChild(option);
+   });
+
+   arret.disabled = liste.length === 0;
+   arret.required = liste.length > 0;
+ });
+
+ // Pas d'arrêt à proximité
+ pasArret.addEventListener("change", function() {
+
+   if(this.checked) {
+     ligne.value = "";
+     ligne.disabled = true;
+     arret.innerHTML = '<option value="">Aucun arrêt</option>';
+     arret.disabled = true;
+     arret.required = false;
+   } else {
+     ligne.disabled = false;
+     arret.innerHTML = '<option value="">Choisir une ligne</option>';
+     arret.disabled = true;
+     arret.required = false;
+   }
+ });
+
+ card.querySelector(".remove").addEventListener("click", function() {
+   card.remove();
+   renumeroter();
+ });
+
+ renumeroter();
+}
+
+// ==========================================
+// RENUMEROTATION DES ENFANTS
+// ==========================================
+
+function renumeroter() {
+
+ const cards = children.querySelectorAll(".child-card");
+
+ cards.forEach((card, index) => {
+   const numero = index + 1;
+   card.querySelector("h3").textContent = "Enfant " + numero;
+
+   card.querySelectorAll("[data-field]").forEach(input => {
+     input.name = `enfants[${numero}][${input.dataset.field}]`;
+   });
+ });
+}
+
+document.getElementById("addChild").addEventListener(
+ "click", ajouterEnfant
+);
+
+ajouterEnfant();
+
+// ==========================================
+// PREPARATION DES DONNEES
+// ==========================================
+
+document.getElementById("velobusForm").addEventListener(
+ "submit", function(e) {
+
+   e.preventDefault();
+
+   const formData = new FormData(this);
+   const donnees = {};
+
+   donnees.parent = {
+     nom: formData.get("parentNom"),
+     email: formData.get("email"),
+     telephone: formData.get("telephone"),
+     accompagnement: formData.getAll("accompagnement")
+   };
+
+   donnees.enfants = [];
+
+   children.querySelectorAll(".child-card").forEach(card => {
+
+     const lire = champ =>
+       card.querySelector(`[data-field="${champ}"]`);
+
+     donnees.enfants.push({
+       nom: lire("nom").value,
+       age: lire("age").value,
+       ecole: lire("ecole").value,
+       ligne: lire("ligne").value,
+       arret: lire("arret").value,
+       pasArret: lire("pasArret").checked,
+       quartier: lire("quartier").value,
+       interet: lire("interet").checked
+     });
+   });
+
+   // Transmission à Google Apps Script à configurer.
+   console.log(donnees);
+
+   document.getElementById("message").textContent =
+     "Formulaire prêt. La connexion à Google reste à configurer.";
+ });
+</script>
+</body>
+</html>
