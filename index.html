@@ -440,10 +440,38 @@ document.getElementById("velobusForm").addEventListener(
    });
 
    // Transmission à Google Apps Script à configurer.
-   console.log(donnees);
+   const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwgwtJOd5ngMryvUj4TnzcTGU4td5z5OBOoqv_phBPJ3JhmRrgPHGd5nqd7KCfCGi-z/exec";
 
-   document.getElementById("message").textContent =
-     "Formulaire prêt. La connexion à Google reste à configurer.";
+const bouton = document.querySelector(".submit");
+const message = document.getElementById("message");
+
+bouton.disabled = true;
+bouton.textContent = "Envoi en cours...";
+
+fetch(SCRIPT_URL, {
+  method: "POST",
+  mode: "no-cors",
+  headers: {
+    "Content-Type": "text/plain;charset=utf-8"
+  },
+  body: JSON.stringify(donnees)
+})
+.then(() => {
+  message.textContent =
+    "Merci ! Votre demande a été transmise.";
+  this.reset();
+  children.innerHTML = "";
+  ajouterEnfant();
+})
+.catch(error => {
+  message.textContent =
+    "Erreur lors de la transmission. Veuillez réessayer.";
+  console.error(error);
+})
+.finally(() => {
+  bouton.disabled = false;
+  bouton.textContent = "Envoyer mon inscription";
+});
  });
 </script>
 </body>
